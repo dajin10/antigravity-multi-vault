@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Antigravity 多仓工作台</title>
+  <style>
+    :root {
+      --shell-bg: #141418;
+      --shell-border: rgba(255, 255, 255, 0.1);
+      --title-bg: #101014;
+      --card-bg: #1c1c22;
+      --card-hover: #212128;
+      --card-border: rgba(255, 255, 255, 0.08);
+      --text-main: #f4f4f5;
+      --text-sub: #a1a1aa;
+      --text-dim: #71717a;
+      --btn-bg: #272730;
+      --btn-border: rgba(255, 255, 255, 0.1);
+      --track-bg: rgba(255, 255, 255, 0.08);
+      --modal-bg: #1e1e26;
+      --input-bg: #121216;
+    }
+
+    body.light {
+      --shell-bg: #f3f4f6;
+      --shell-border: rgba(0, 0, 0, 0.12);
+      --title-bg: #ffffff;
+      --card-bg: #ffffff;
+      --card-hover: #fafafa;
+      --card-border: #e5e7eb;
+      --text-main: #111827;
+      --text-sub: #4b5563;
+      --text-dim: #6b7280;
+      --btn-bg: #f3f4f6;
+      --btn-border: #d1d5db;
+      --track-bg: #e5e7eb;
+      --modal-bg: #ffffff;
+      --input-bg: #f9fafb;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      font-family: "Microsoft YaHei", "Segoe UI", system-ui, -apple-system, sans-serif;
+      color: var(--text-main);
+      overflow: hidden;
+    }
+
+    .shell {
+      width: 100%;
+      height: 100%;
+      background: var(--shell-bg);
+      border: 1px solid var(--shell-border);
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.45);
+    }
+
+    /* 标题栏（支持拖拽） */
+    .title-bar {
+      height: 42px;
+      flex-shrink: 0;
+      background: var(--title-bg);
+      border-bottom: 1px solid var(--card-border);
+      padding: 0 10px 0 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: grab;
+    }
+    .title-bar:active { cursor: grabbing; }
+    .title-left {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    .title-badge {
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 1px 7px;
+      border-radius: 999px;
+      background: rgba(16, 185, 129, 0.14);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.35);
+    }
+    .title-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .icon-btn {
+      width: 28px;
+      height: 28px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-sub);
+      border-radius: 7px;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+      transition: all 0.15s ease;
+    }
+    .icon-btn:hover { background: rgba(128, 128, 128, 0.14); color: var(--text-main); }
+    .icon-btn.privacy-on {
+      background: rgba(16, 185, 129, 0.16);
+      border-color: rgba(16, 185, 129, 0.4);
+      color: #10b981;
+    }
+    .icon-btn.close:hover { background: rgba(239, 68, 68, 0.18); color: #ef4444; }
+
+    /* 主内容区 */
+    .body-wrap {
+      flex: 1;
+      padding: 10px 12px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      min-height: 0;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 9px 11px;
+      transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+    }
+    .card:hover { background: var(--card-hover); }
+    .card.card-active {
+      border: 2px solid #ef4444;
+      padding: 8px 10px;
+      box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.24), 0 4px 12px rgba(239, 68, 68, 0.16);
+    }
+    body.light .card.card-active {
+      border-color: #dc2626;
+      box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.18), 0 4px 12px rgba(220, 38, 38, 0.12);
+    }
+
+    /* 当前登录账号卡片 */
+    .cur-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .cur-label { font-size: 11.5px; font-weight: 700; color: var(--text-sub); }
+    .tag-pill {
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(16, 185, 129, 0.14);
+      color: #10b981;
+    }
+    .cur-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .email-text {
+      font-family: Consolas, "JetBrains Mono", monospace;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-main);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      user-select: text;
+    }
+    .email-masked { color: #10b981; letter-spacing: 0.02em; }
+    .btn-refresh {
+      flex-shrink: 0;
+      background: rgba(56, 189, 248, 0.12);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      border-radius: 6px;
+      padding: 4px 9px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-refresh:hover { background: rgba(56, 189, 248, 0.22); }
+    body.light .btn-refresh { color: #0284c7; background: #f0f9ff; border-color: #bae6fd; }
+
+    /* 动态多仓滚动区 */
+    .slots-scroll {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 3px 4px 3px 3px;
+    }
+    .slots-scroll::-webkit-scrollbar { width: 5px; }
+    .slots-scroll::-webkit-scrollbar-track { background: transparent; }
+    .slots-scroll::-webkit-scrollbar-thumb { background: rgba(128, 128, 128, 0.28); border-radius: 99px; }
+    .slots-scroll::-webkit-scrollbar-thumb:hover { background: rgba(128, 128, 128, 0.45); }
+
+    .slot-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    .slot-title {
+      font-size: 12.5px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 175px;
+    }
+    .slot-meta { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .slot-archived { font-size: 10.5px; font-weight: 600; color: #10b981; }
+    .slot-unarchived { font-size: 10.5px; font-weight: 600; color: #f59e0b; }
+    .btn-primary-tag {
+      font-size: 10.5px;
+      padding: 2px 8px;
+      border-radius: 5px;
+      background: var(--btn-bg);
+      border: 1px solid var(--btn-border);
+      color: var(--text-sub);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-primary-tag:hover:not(:disabled) { border-color: #eab308; color: #eab308; }
+    .btn-primary-tag.is-primary {
+      background: rgba(234, 179, 8, 0.15);
+      border-color: #eab308;
+      color: #facc15;
+      font-weight: 700;
+      cursor: default;
+    }
+    body.light .btn-primary-tag.is-primary { background: #fef9c3; color: #a16207; }
+
+    /* 邮箱行 + 右侧独立红色删除按钮 */
+    .email-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .btn-delete-slot {
+      flex-shrink: 0;
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: #ef4444;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      transition: all 0.15s ease;
+    }
+    .btn-delete-slot svg {
+      width: 15px;
+      height: 15px;
+      display: block;
+    }
+    .btn-delete-slot:hover {
+      background: rgba(239, 68, 68, 0.16);
+      border-color: rgba(239, 68, 68, 0.35);
+      color: #f87171;
+      transform: scale(1.06);
+    }
+    body.light .btn-delete-slot {
+      background: transparent;
+      border-color: transparent;
+      color: #dc2626;
+    }
+    body.light .btn-delete-slot:hover {
+      background: #fee2e2;
+      border-color: #fca5a5;
+      color: #b91c1c;
+    }
+
+    /* 现代光滑进度条 */
+    .quota-block { margin-bottom: 5px; }
+    .quota-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 3px;
+    }
+    .quota-bar-track {
+      width: 100%;
+      height: 5px;
+      background: var(--track-bg);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 2px;
+    }
+    .quota-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.35s ease;
+    }
+    .quota-sub { font-size: 10px; color: var(--text-dim); }
+
+    .slot-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 7px;
+    }
+    .btn-slot {
+      padding: 5px 0;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--btn-bg);
+      border: 1px solid var(--btn-border);
+      color: var(--text-main);
+      transition: all 0.15s ease;
+    }
+    .btn-slot:hover:not(:disabled) { filter: brightness(1.12); }
+    .btn-slot.active-seat { opacity: 0.9; cursor: default; }
+
+    /* 底部操作区 */
+    .btn-add-slot {
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1.5px dashed rgba(16, 185, 129, 0.7);
+      background: rgba(16, 185, 129, 0.1);
+      color: #34d399;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+    .btn-add-slot:hover { background: rgba(16, 185, 129, 0.2); }
+    body.light .btn-add-slot { color: #059669; background: #ecfdf5; }
+
+    .btn-launch {
+      width: 100%;
+      padding: 9px 12px;
+      border-radius: 8px;
+      border: none;
+      background: linear-gradient(135deg, #059669, #10b981);
+      color: #fff;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: filter 0.15s ease;
+    }
+    .btn-launch:hover:not(:disabled) { filter: brightness(1.08); }
+    .btn-launch:disabled { opacity: 0.7; cursor: wait; }
+
+    .legend-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 7px 10px;
+      flex-shrink: 0;
+    }
+    .legend-title { font-size: 10.5px; font-weight: 700; margin-bottom: 4px; color: var(--text-sub); }
+    .legend-grid { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 10px; font-weight: 700; }
+
+    .footer-meta {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 0 2px;
+    }
+    .dock-check {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-sub);
+      cursor: pointer;
+    }
+    .footer-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+    .quit-link {
+      color: var(--text-dim);
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    .quit-link:hover { color: #ef4444; }
+
+    /* 内置模态弹窗 */
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.58);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 999;
+    }
+    .modal-mask.show { display: flex; }
+    .modal-box {
+      width: 100%;
+      background: var(--modal-bg);
+      border: 1px solid var(--shell-border);
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13.5px;
+      font-weight: 700;
+    }
+    .field-lbl { font-size: 11px; color: var(--text-sub); margin-bottom: 4px; display: block; }
+    .text-input {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 7px;
+      padding: 7px 10px;
+      color: var(--text-main);
+      font-size: 12px;
+      outline: none;
+    }
+    .text-input:focus { border-color: #10b981; }
+    .modal-btn-primary {
+      width: 100%;
+      padding: 9px;
+      border-radius: 7px;
+      border: none;
+      background: #0284c7;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .modal-btn-secondary {
+      width: 100%;
+      padding: 8px;
+      border-radius: 7px;
+      border: 1px solid var(--btn-border);
+      background: var(--btn-bg);
+      color: var(--text-main);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .modal-btn-danger {
+      flex: 1;
+      padding: 8px;
+      border-radius: 7px;
+      border: none;
+      background: #dc2626;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(16, 185, 129, 0.95);
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 700;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      z-index: 1000;
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="title-bar" id="titleBar">
+      <div class="title-left">
+        <span id="uiTitle">⚡ 多仓工作台</span>
+        <span class="title-badge" id="slotCountBadge">...</span>
+      </div>
+      <div class="title-actions">
+        <button class="icon-btn" id="btnLang" style="font-size:11px;font-weight:700;width:auto;padding:0 6px;" title="Switch Language / 切换语言" onclick="toggleLang()">EN</button>
+        <button class="icon-btn" id="btnPrivacy" title="演示隐私模式：一键屏蔽/显示邮箱" onclick="togglePrivacy()">👁</button>
+        <button class="icon-btn" id="btnTheme" title="切换深浅色主题" onclick="toggleTheme()">🌓</button>
+        <button class="icon-btn" id="btnMin" title="隐藏到后台" onclick="hideWindow()">—</button>
+        <button class="icon-btn close" id="btnClose" title="隐藏到后台" onclick="hideWindow()">✕</button>
+      </div>
+    </div>
+
+    <div class="body-wrap">
+      <div class="card">
+        <div class="cur-top">
+          <span class="cur-label" id="lblCurAccount">● 当前反重力登录账号</span>
+          <span class="tag-pill" id="curTag">读取中</span>
+        </div>
+        <div class="cur-bottom">
+          <span class="email-text" id="curEmail">读取中...</span>
+          <button class="btn-refresh" id="btnRefresh" onclick="refreshQuota()">🔄 刷新额度</button>
+        </div>
+      </div>
+
+      <div class="slots-scroll" id="slotsContainer"></div>
+
+      <button class="btn-add-slot" id="btnAddSlot" onclick="openAddModal()">＋ 新增账号仓（支持无限扩展）</button>
+      <button class="btn-launch" id="btnLaunch" onclick="launchApp()">🚀 启动 Antigravity 应用</button>
+
+      <div class="legend-card">
+        <div class="legend-title" id="lblLegendTitle">📊 Gemini 额度阶梯判定区间</div>
+        <div class="legend-grid" id="legendGrid">
+          <span style="color:#10b981;">🟢 充裕 &gt;70%</span>
+          <span style="color:#34d399;">🟢 良好 41~70%</span>
+          <span style="color:#facc15;">🟡 注意 21~40%</span>
+          <span style="color:#fb923c;">🟠 紧张 1~20%</span>
+          <span style="color:#f87171;">🔴 已用尽 0%</span>
+        </div>
+      </div>
+
+      <div class="footer-meta">
+        <label class="dock-check">
+          <input type="checkbox" id="chkAutoDock" checked onchange="saveAutoDock(this.checked)" />
+          <span id="lblAutoDock">呼出时自动在反重力窗口右侧顶部对齐</span>
+        </label>
+        <div class="footer-bottom">
+          <span id="lblCornerTip">💡 反重力右下角点 [⚡ 多仓] 可随时呼出</span>
+          <span class="quit-link" id="lblQuitLink" onclick="openQuitModal()">✕ 彻底退出</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 新增仓位弹窗 -->
+  <div class="modal-mask" id="addModal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <span id="lblAddTitle">＋ 新增账号仓</span>
+        <button class="icon-btn" onclick="closeModal('addModal')">✕</button>
+      </div>
+      <div>
+        <label class="field-lbl" id="lblNewId">仓位 ID（英文/数字）</label>
+        <input class="text-input" id="newSlotId" type="text" />
+      </div>
+      <div>
+        <label class="field-lbl" id="lblNewLabel">仓位别名（如：团队备用、海外工作号）</label>
+        <input class="text-input" id="newSlotLabel" type="text" />
+      </div>
+      <button class="modal-btn-primary" id="btnPrepNew" onclick="submitPrepareNew()">🆕 空白沙盒登录新号并自动捕获（推荐）</button>
+      <button class="modal-btn-secondary" id="btnSaveCur" onclick="submitSaveCurrent()">📌 直接把当前已登录账号存入此仓</button>
+    </div>
+  </div>
+
+  <!-- 删除确认弹窗 -->
+  <div class="modal-mask" id="deleteModal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <span style="color:#ef4444;display:inline-flex;align-items:center;gap:6px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg><span id="lblDelTitle">移除账号仓确认</span></span>
+        <button class="icon-btn" onclick="closeModal('deleteModal')">✕</button>
+      </div>
+      <div style="font-size:12px;line-height:1.55;color:var(--text-sub);" id="deleteMsg"></div>
+      <div style="display:flex;gap:8px;">
+        <button class="modal-btn-secondary" style="flex:1;" id="btnDelCancel" onclick="closeModal('deleteModal')">取消</button>
+        <button class="modal-btn-danger" id="btnDelConfirm" onclick="confirmDelete()">确认彻底移除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 退出确认弹窗 -->
+  <div class="modal-mask" id="quitModal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <span id="lblQuitTitle">退出多仓工作台</span>
+        <button class="icon-btn" onclick="closeModal('quitModal')">✕</button>
+      </div>
+      <div style="font-size:12px;line-height:1.55;color:var(--text-sub);" id="lblQuitMsg">
+        确定要彻底关闭多仓工作台后台常驻进程吗？
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="modal-btn-secondary" style="flex:1;" id="btnQuitCancel" onclick="closeModal('quitModal')">取消</button>
+        <button class="modal-btn-danger" id="btnQuitConfirm" onclick="confirmQuit()">彻底退出</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const PALETTE = ['#3b82f6', '#10b981', '#a855f7', '#f59e0b', '#38bdf8', '#ec4899'];
+    const TRASH_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>';
+    let state = { slots: [], privacyMode: false, darkMode: true, lang: 'zh', autoDock: true, isSwitching: false };
+    let pendingDeleteId = '';
+
+    const I18N = {
+      zh: {
+        title: '⚡ 多仓工作台',
+        slotCount: (n) => `${n} 仓`,
+        langBtn: 'EN',
+        curAccount: '● 当前反重力登录账号',
+        notLoggedIn: '(未登录 / 登录已登出)',
+        unarchivedNew: '未归档新号',
+        waitingLogin: '等待登录',
+        refreshBtn: '🔄 刷新额度',
+        refreshing: '⏳ 刷新中...',
+        switching: '⏳ 正在切换账号...',
+        launchBtn: '🚀 启动 Antigravity 应用',
+        addSlotBtn: '＋ 新增账号仓（支持无限扩展）',
+        legendTitle: '📊 Gemini 额度阶梯判定区间',
+        legendHtml: '<span style="color:#10b981;">🟢 充裕 &gt;70%</span><span style="color:#34d399;">🟢 良好 41~70%</span><span style="color:#facc15;">🟡 注意 21~40%</span><span style="color:#fb923c;">🟠 紧张 1~20%</span><span style="color:#f87171;">🔴 已用尽 0%</span>',
+        autoDock: '呼出时自动在反重力窗口右侧顶部对齐',
+        cornerTip: '💡 反重力右下角点 [⚡ 多仓] 可随时呼出',
+        quitLink: '✕ 彻底退出',
+        archived: '已归档 ✓',
+        unarchived: '未录入',
+        primaryTag: '★ 主力',
+        setPrimary: '设为主力',
+        unregisteredEmail: '尚未录入 (待绑定)',
+        maskedEmail: '••••••@••••.com (已屏蔽)',
+        q5h: '⏱️ 5小时 [Gemini]',
+        qwk: '📅 每周 [Gemini]',
+        tierFull: '【充裕】畅用中',
+        tierEmpty: '【已用尽】0%',
+        tierLow: '【紧张】',
+        tierWarn: '【注意】',
+        tierGood: '【良好】',
+        tierHigh: '【充裕】',
+        resetPrefix: '↳ 恢复: ',
+        resetSuffix: '后恢复',
+        resetNormal: '额度监控正常',
+        justNow: '刚刚更新',
+        minAgo: (m) => `${m}m前更新`,
+        hrAgo: (h) => `${h}h前更新`,
+        histData: '历史数据',
+        syncSnapshotBtn: '🔄 更新快照',
+        bindActiveBtn: '📌 绑定当前号',
+        activeSeat: '✓ 在席中',
+        switchBtn: (id) => `⚡ 切到 ${id}`,
+        addTitle: '＋ 新增账号仓',
+        newIdLbl: '仓位 ID（英文/数字）',
+        newLblLbl: '仓位别名（如：团队备用、海外工作号）',
+        defaultAlias: (n) => `扩展仓 ${n}`,
+        prepNewBtn: '🆕 空白沙盒登录新号并自动捕获（推荐）',
+        saveCurBtn: '📌 直接把当前已登录账号存入此仓',
+        delTitle: '移除账号仓确认',
+        delMsg: (lbl, id) => `确定要移除仓位 [${lbl} (${id})] 吗？将同步清理该仓位的本地凭据与会话快照。`,
+        cancel: '取消',
+        delConfirm: '确认彻底移除',
+        quitTitle: '退出多仓工作台',
+        quitMsg: '确定要彻底关闭多仓工作台后台常驻进程吗？',
+        quitConfirm: '彻底退出',
+        toastPrimary: (id) => `已将 ${id} 设为主力仓`,
+        toastSynced: (id) => `已更新 ${id} 快照`,
+        toastBound: (id) => `已将当前账号绑定至 ${id}`,
+        toastSwitching: (id) => `正在切换至 ${id}...`,
+        toastLaunching: '正在启动 Antigravity...',
+        toastPrepNew: '正在备份当前会话并打开空白登录...',
+        toastAdded: (id) => `已新增并保存仓位 ${id}`,
+        toastRemoved: '已移除仓位',
+      },
+      en: {
+        title: '⚡ Multi-Vault',
+        slotCount: (n) => `${n} Slots`,
+        langBtn: '中',
+        curAccount: '● Active Antigravity Account',
+        notLoggedIn: '(Signed Out)',
+        unarchivedNew: 'Unsaved Account',
+        waitingLogin: 'Waiting Login',
+        refreshBtn: '🔄 Refresh',
+        refreshing: '⏳ Syncing...',
+        switching: '⏳ Switching Account...',
+        launchBtn: '🚀 Launch Antigravity',
+        addSlotBtn: '＋ Add Account Slot (Unlimited)',
+        legendTitle: '📊 Gemini Quota Tiers',
+        legendHtml: '<span style="color:#10b981;">🟢 High &gt;70%</span><span style="color:#34d399;">🟢 Good 41-70%</span><span style="color:#facc15;">🟡 Fair 21-40%</span><span style="color:#fb923c;">🟠 Low 1-20%</span><span style="color:#f87171;">🔴 Empty 0%</span>',
+        autoDock: 'Auto-dock to right side of Antigravity',
+        cornerTip: '💡 Click [⚡ Multi-Vault] at bottom-right to toggle',
+        quitLink: '✕ Quit App',
+        archived: 'Saved ✓',
+        unarchived: 'Empty',
+        primaryTag: '★ Primary',
+        setPrimary: 'Set Primary',
+        unregisteredEmail: 'Not bound yet',
+        maskedEmail: '••••••@••••.com (Masked)',
+        q5h: '⏱️ 5-Hour [Gemini]',
+        qwk: '📅 Weekly [Gemini]',
+        tierFull: '[High] Ready',
+        tierEmpty: '[Empty] 0%',
+        tierLow: '[Low] ',
+        tierWarn: '[Fair] ',
+        tierGood: '[Good] ',
+        tierHigh: '[High] ',
+        resetPrefix: '↳ Reset: ',
+        resetSuffix: ' left',
+        resetNormal: 'Quota healthy',
+        justNow: 'just now',
+        minAgo: (m) => `${m}m ago`,
+        hrAgo: (h) => `${h}h ago`,
+        histData: 'cached',
+        syncSnapshotBtn: '🔄 Sync Snapshot',
+        bindActiveBtn: '📌 Bind Active',
+        activeSeat: '✓ Active',
+        switchBtn: (id) => `⚡ Use ${id}`,
+        addTitle: '＋ Add Account Slot',
+        newIdLbl: 'Slot ID (letters/numbers)',
+        newLblLbl: 'Alias (e.g. Work, Team Backup)',
+        defaultAlias: (n) => `Slot ${n}`,
+        prepNewBtn: '🆕 Clean Sandbox Login & Auto-Capture (Rec.)',
+        saveCurBtn: '📌 Save Currently Signed-In Account Here',
+        delTitle: 'Remove Account Slot',
+        delMsg: (lbl, id) => `Remove slot [${lbl} (${id})]? Its local credential and session snapshot will be purged.`,
+        cancel: 'Cancel',
+        delConfirm: 'Remove Slot',
+        quitTitle: 'Quit Multi-Vault',
+        quitMsg: 'Are you sure you want to stop the Multi-Vault background service?',
+        quitConfirm: 'Quit',
+        toastPrimary: (id) => `Set ${id} as primary slot`,
+        toastSynced: (id) => `Updated snapshot for ${id}`,
+        toastBound: (id) => `Bound active account to ${id}`,
+        toastSwitching: (id) => `Switching to ${id}...`,
+        toastSwitchingErr: 'Switch failed',
+        toastLaunching: 'Launching Antigravity...',
+        toastPrepNew: 'Backing up session & opening clean login...',
+        toastAdded: (id) => `Added and saved slot ${id}`,
+        toastRemoved: 'Slot removed',
+      }
+    };
+    const T = () => I18N[state.lang === 'en' ? 'en' : 'zh'];
+
+    // 标题栏鼠标拖拽移动原生窗口
+    const titleBar = document.getElementById('titleBar');
+    let dragInit = false;
+    titleBar.addEventListener('mousedown', (e) => {
+      if (e.target.closest('.title-actions')) return;
+      dragInit = true;
+      fetch('/api/start-drag', { method: 'POST' }).catch(() => {});
+    });
+    window.addEventListener('mouseup', () => { dragInit = false; });
+
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 2200);
+    }
+
+    function tierInfo(pct, valStr) {
+      const t = T();
+      if (!valStr) return { label: t.tierFull, pctShow: 100, color: '#10b981' };
+      if (valStr === '0%' || valStr.includes('用尽') || pct === 0) return { label: t.tierEmpty, pctShow: 0, color: '#f87171' };
+      if (pct <= 20) return { label: `${t.tierLow}${valStr}`, pctShow: pct, color: '#fb923c' };
+      if (pct <= 40) return { label: `${t.tierWarn}${valStr}`, pctShow: pct, color: '#facc15' };
+      if (pct <= 70) return { label: `${t.tierGood}${valStr}`, pctShow: pct, color: '#34d399' };
+      return { label: `${t.tierHigh}${valStr}`, pctShow: pct, color: '#10b981' };
+    }
+
+    function formatReset(resetStr, updatedAt) {
+      const t = T();
+      let age = '';
+      if (updatedAt > 0) {
+        const min = (Date.now() - updatedAt) / 60000;
+        if (min < 1) age = t.justNow;
+        else if (min < 60) age = t.minAgo(Math.floor(min));
+        else if (min < 1440) age = t.hrAgo(Math.floor(min / 60));
+        else age = t.histData;
+      }
+      const desc = resetStr ? `${resetStr}${t.resetSuffix}` : t.resetNormal;
+      return age ? `${t.resetPrefix}${desc} [${age}]` : `${t.resetPrefix}${desc}`;
+    }
+
+    function applyStaticI18n() {
+      const t = T();
+      document.getElementById('uiTitle').textContent = t.title;
+      document.getElementById('btnLang').textContent = t.langBtn;
+      document.getElementById('lblCurAccount').textContent = t.curAccount;
+      document.getElementById('btnAddSlot').textContent = t.addSlotBtn;
+      document.getElementById('lblLegendTitle').textContent = t.legendTitle;
+      document.getElementById('legendGrid').innerHTML = t.legendHtml;
+      document.getElementById('lblAutoDock').textContent = t.autoDock;
+      document.getElementById('lblCornerTip').textContent = t.cornerTip;
+      document.getElementById('lblQuitLink').textContent = t.quitLink;
+      document.getElementById('lblAddTitle').textContent = t.addTitle;
+      document.getElementById('lblNewId').textContent = t.newIdLbl;
+      document.getElementById('lblNewLabel').textContent = t.newLblLbl;
+      document.getElementById('btnPrepNew').textContent = t.prepNewBtn;
+      document.getElementById('btnSaveCur').textContent = t.saveCurBtn;
+      document.getElementById('lblDelTitle').textContent = t.delTitle;
+      document.getElementById('btnDelCancel').textContent = t.cancel;
+      document.getElementById('btnDelConfirm').textContent = t.delConfirm;
+      document.getElementById('lblQuitTitle').textContent = t.quitTitle;
+      document.getElementById('lblQuitMsg').textContent = t.quitMsg;
+      document.getElementById('btnQuitCancel').textContent = t.cancel;
+      document.getElementById('btnQuitConfirm').textContent = t.quitConfirm;
+    }
+
+    function renderState(data) {
+      state = data;
+      const t = T();
+      applyStaticI18n();
+      document.body.classList.toggle('light', !data.darkMode);
+      document.getElementById('btnTheme').textContent = data.darkMode ? '🌓' : '☀️';
+
+      const privBtn = document.getElementById('btnPrivacy');
+      privBtn.textContent = data.privacyMode ? '🙈' : '👁';
+      privBtn.classList.toggle('privacy-on', !!data.privacyMode);
+
+      document.getElementById('chkAutoDock').checked = data.autoDock !== false;
+      document.getElementById('slotCountBadge').textContent = t.slotCount(data.slots.length);
+
+      const curEmailEl = document.getElementById('curEmail');
+      const curMasked = data.privacyMode && data.currentEmail ? t.maskedEmail : data.currentEmail;
+      curEmailEl.textContent = curMasked || t.notLoggedIn;
+      curEmailEl.classList.toggle('email-masked', !!data.privacyMode && !!data.currentEmail);
+
+      const activeSlot = data.slots.find(s => s.isActive);
+      const curTagEl = document.getElementById('curTag');
+      if (activeSlot) {
+        curTagEl.textContent = activeSlot.label || activeSlot.id;
+      } else {
+        curTagEl.textContent = data.currentEmail ? t.unarchivedNew : t.waitingLogin;
+      }
+
+      const btnRefresh = document.getElementById('btnRefresh');
+      if (!btnRefresh.disabled) btnRefresh.textContent = t.refreshBtn;
+
+      const btnLaunch = document.getElementById('btnLaunch');
+      btnLaunch.disabled = !!data.isSwitching;
+      btnLaunch.textContent = data.isSwitching ? t.switching : t.launchBtn;
+
+      const canDelete = data.slots.length > 1;
+      const container = document.getElementById('slotsContainer');
+      container.innerHTML = data.slots.map((s, idx) => {
+        const color = PALETTE[idx % PALETTE.length];
+        const q = s.quota || {};
+        const t5 = tierInfo(q.fiveHourPct ?? -1, q.fiveHourLimit || '');
+        const tw = tierInfo(q.weeklyPct ?? -1, q.weeklyLimit || '');
+        const emailText = s.email ? (data.privacyMode ? t.maskedEmail : s.email) : t.unregisteredEmail;
+
+        return `
+          <div class="card${s.isActive ? ' card-active' : ''}">
+            <div class="slot-head">
+              <div class="slot-title" style="color:${color};">
+                <span>${s.isPrimary ? '★' : '👤'}</span>
+                <span>${s.label} (${s.id})</span>
+              </div>
+              <div class="slot-meta">
+                <span class="${s.saved ? 'slot-archived' : 'slot-unarchived'}">${s.saved ? t.archived : t.unarchived}</span>
+                <button class="btn-primary-tag ${s.isPrimary ? 'is-primary' : ''}" ${s.isPrimary ? 'disabled' : ''} onclick="setPrimary('${s.id}')">
+                  ${s.isPrimary ? t.primaryTag : t.setPrimary}
+                </button>
+              </div>
+            </div>
+
+            <div class="email-row">
+              <div class="email-text ${data.privacyMode && s.email ? 'email-masked' : ''}">${emailText}</div>
+              ${canDelete ? `<button class="btn-delete-slot" title="${t.delConfirm}" aria-label="${t.delConfirm}" onclick="openDeleteModal('${s.id}', '${s.label}')">${TRASH_ICON_SVG}</button>` : ''}
+            </div>
+
+            <div class="quota-block">
+              <div class="quota-head" style="color:${t5.color};">
+                <span>${t.q5h}</span>
+                <span>${t5.label}</span>
+              </div>
+              <div class="quota-bar-track">
+                <div class="quota-bar-fill" style="width:${Math.max(0, Math.min(100, t5.pctShow))}%;background:${t5.color};"></div>
+              </div>
+              <div class="quota-sub">${formatReset(q.fiveHourReset, q.updatedAt || 0)}</div>
+            </div>
+
+            <div class="quota-block">
+              <div class="quota-head" style="color:${tw.color};">
+                <span>${t.qwk}</span>
+                <span>${tw.label}</span>
+              </div>
+              <div class="quota-bar-track">
+                <div class="quota-bar-fill" style="width:${Math.max(0, Math.min(100, tw.pctShow))}%;background:${tw.color};"></div>
+              </div>
+              <div class="quota-sub">${formatReset(q.weeklyReset, q.updatedAt || 0)}</div>
+            </div>
+
+            <div class="slot-actions">
+              <button class="btn-slot" onclick="saveSlot('${s.id}', ${s.saved ? 'true' : 'false'})">${s.saved ? t.syncSnapshotBtn : t.bindActiveBtn}</button>
+              ${s.isActive
+                ? `<button class="btn-slot active-seat" disabled style="color:${color};border-color:${color};">${t.activeSeat}</button>`
+                : `<button class="btn-slot" ${(!s.saved || data.isSwitching) ? 'disabled' : ''} style="color:${color};border-color:${color};" onclick="switchSlot('${s.id}')">${t.switchBtn(s.id)}</button>`}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function fetchStatus() {
+      try {
+        const res = await fetch('/api/state', { cache: 'no-store' });
+        if (res.ok) renderState(await res.json());
+      } catch {}
+    }
+
+    async function toggleLang() {
+      const res = await fetch('/api/lang', { method: 'POST' });
+      if (res.ok) renderState(await res.json());
+    }
+
+    async function togglePrivacy() {
+      const res = await fetch('/api/privacy', { method: 'POST' });
+      if (res.ok) renderState(await res.json());
+    }
+
+    async function toggleTheme() {
+      const res = await fetch('/api/theme', { method: 'POST' });
+      if (res.ok) renderState(await res.json());
+    }
+
+    async function saveAutoDock(val) {
+      await fetch('/api/autodock', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ autoDock: val }) });
+    }
+
+    async function hideWindow() {
+      await fetch('/api/hide', { method: 'POST' });
+    }
+
+    async function refreshQuota() {
+      const btn = document.getElementById('btnRefresh');
+      btn.disabled = true;
+      btn.textContent = T().refreshing;
+      await fetch('/api/refresh-quota', { method: 'POST' });
+      setTimeout(async () => {
+        await fetchStatus();
+        btn.disabled = false;
+        btn.textContent = T().refreshBtn;
+      }, 900);
+    }
+
+    async function setPrimary(id) {
+      await fetch('/api/set-primary', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ slot: id }) });
+      await fetchStatus();
+      showToast(T().toastPrimary(id));
+    }
+
+    async function saveSlot(id, isSaved) {
+      await fetch('/api/save', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ slot: id }) });
+      await fetchStatus();
+      showToast(isSaved ? T().toastSynced(id) : T().toastBound(id));
+    }
+
+    async function switchSlot(id) {
+      showToast(T().toastSwitching(id));
+      await fetch('/api/switch', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ slot: id }) });
+      await fetchStatus();
+    }
+
+    async function launchApp() {
+      showToast(T().toastLaunching);
+      await fetch('/api/launch', { method: 'POST' });
+    }
+
+    function openAddModal() {
+      const nextIdx = state.slots.length + 1;
+      document.getElementById('newSlotId').value = `slot-${nextIdx}`;
+      document.getElementById('newSlotLabel').value = T().defaultAlias(nextIdx);
+      document.getElementById('addModal').classList.add('show');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('show');
+    }
+
+    async function submitPrepareNew() {
+      const sid = document.getElementById('newSlotId').value.trim();
+      const label = document.getElementById('newSlotLabel').value.trim();
+      if (!sid) return;
+      closeModal('addModal');
+      showToast(T().toastPrepNew);
+      await fetch('/api/prepare-new', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ slot: sid, label }) });
+      await fetchStatus();
+    }
+
+    async function submitSaveCurrent() {
+      const sid = document.getElementById('newSlotId').value.trim();
+      const label = document.getElementById('newSlotLabel').value.trim();
+      if (!sid) return;
+      closeModal('addModal');
+      await fetch('/api/save', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ slot: sid, label }) });
+      await fetchStatus();
+      showToast(T().toastAdded(sid));
+    }
+
+    function openDeleteModal(id, label) {
+      pendingDeleteId = id;
+      document.getElementById('deleteMsg').textContent = T().delMsg(label, id);
+      document.getElementById('deleteModal').classList.add('show');
+    }
+
+    async function confirmDelete() {
+      if (!pendingDeleteId) return;
+      closeModal('deleteModal');
+      await fetch('/api/remove', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ slot: pendingDeleteId }) });
+      pendingDeleteId = '';
+      await fetchStatus();
+      showToast(T().toastRemoved);
+    }
+
+    function openQuitModal() {
+      document.getElementById('quitModal').classList.add('show');
+    }
+
+    async function confirmQuit() {
+      await fetch('/api/quit', { method: 'POST' });
+    }
+
+    fetchStatus();
+    setInterval(fetchStatus, 3000);
+  </script>
+</body>
+</html>

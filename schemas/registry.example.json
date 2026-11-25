@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "primarySlot": "slot-1",
+  "privacyMode": false,
+  "slots": [
+    {
+      "id": "slot-1",
+      "label": "主力仓",
+      "role": "primary",
+      "email": "user1@example.com",
+      "createdAt": 1795590000000
+    },
+    {
+      "id": "slot-2",
+      "label": "接力仓",
+      "role": "relay",
+      "email": "user2@example.com",
+      "createdAt": 1795590000000
+    }
+  ]
+}

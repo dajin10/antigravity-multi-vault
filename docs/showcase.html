@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Antigravity Multi-Vault · 多仓工作台与扩展展示</title>
+  <style>
+    :root {
+      --bg-canvas: #0f1014;
+      --text-canvas: #f4f4f5;
+      --muted-canvas: #a1a1aa;
+      --card-shell: #18181b;
+      --card-inner: #202025;
+      --border-shell: #30303a;
+      --title-bar: #121214;
+      --text-main: #f4f4f5;
+      --text-sub: #a1a1aa;
+      --text-dim: #71717a;
+      --btn-bg: #27272e;
+      --btn-border: #3f3f4a;
+      --emerald: #10b981;
+      --blue: #3b82f6;
+      --violet: #8b5cf6;
+      --amber: #f59e0b;
+      --orange: #fb923c;
+      --red: #f87171;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Microsoft YaHei", "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at 20% 0%, #172554 0%, #0f1014 45%, #09090b 100%);
+      color: var(--text-canvas);
+      min-height: 100vh;
+      padding: 36px 28px 48px;
+    }
+
+    .hero {
+      max-width: 1240px;
+      margin: 0 auto 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #34d399;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      padding: 4px 10px;
+      border-radius: 999px;
+      margin-bottom: 10px;
+    }
+    .hero h1 {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+    }
+    .hero p {
+      font-size: 14px;
+      color: var(--muted-canvas);
+      max-width: 720px;
+      line-height: 1.6;
+    }
+    .hero-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .ctrl-pill {
+      background: #27272e;
+      color: #f4f4f5;
+      border: 1px solid #3f3f4a;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .ctrl-pill:hover { border-color: #34d399; color: #34d399; }
+    .ctrl-pill.active { background: rgba(16, 185, 129, 0.18); border-color: #10b981; color: #34d399; }
+
+    /* 三列展示舞台 */
+    .stage {
+      max-width: 1240px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 28px;
+      align-items: start;
+    }
+    @media (max-width: 1120px) {
+      .stage { grid-template-columns: 1fr; justify-items: center; }
+    }
+
+    .scene-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+    .scene-caption {
+      width: 348px;
+      background: rgba(24, 24, 27, 0.85);
+      border: 1px solid #27272e;
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+    .scene-caption .step-tag {
+      font-size: 11px;
+      font-weight: 700;
+      color: #38bdf8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+    .scene-caption h2 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .scene-caption p { font-size: 12px; color: var(--muted-canvas); line-height: 1.5; }
+
+    /* 模拟工作台窗口外壳 */
+    .vault-window {
+      width: 348px;
+      background: var(--card-shell);
+      border: 1px solid var(--border-shell);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 22px 50px rgba(0, 0, 0, 0.55);
+      position: relative;
+      color: var(--text-main);
+    }
+    .vault-window.light {
+      --card-shell: #f3f4f6;
+      --card-inner: #ffffff;
+      --border-shell: #d1d5db;
+      --title-bar: #ffffff;
+      --text-main: #111827;
+      --text-sub: #4b5563;
+      --text-dim: #6b7280;
+      --btn-bg: #f3f4f6;
+      --btn-border: #d1d5db;
+    }
+
+    .title-bar {
+      height: 40px;
+      background: var(--title-bar);
+      border-bottom: 1px solid var(--border-shell);
+      padding: 0 10px 0 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .title-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12.5px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .title-badge {
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: rgba(16, 185, 129, 0.15);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      white-space: nowrap;
+    }
+    .title-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .icon-btn {
+      width: 26px;
+      height: 26px;
+      border: none;
+      background: transparent;
+      color: var(--text-sub);
+      border-radius: 5px;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+    }
+    .icon-btn:hover { background: rgba(128, 128, 128, 0.15); }
+    .icon-btn.privacy-on {
+      background: rgba(16, 185, 129, 0.18);
+      color: #10b981;
+    }
+
+    .win-body {
+      padding: 10px 12px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* 智能接力推荐条 */
+    .recommend-banner {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.14), rgba(56, 189, 248, 0.1));
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      border-radius: 7px;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .recommend-text {
+      font-size: 11px;
+      line-height: 1.45;
+      color: var(--text-main);
+    }
+    .recommend-text strong { color: #10b981; }
+    .btn-mini-relay {
+      flex-shrink: 0;
+      background: #059669;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      padding: 5px 9px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* 通用卡片 */
+    .card {
+      background: var(--card-inner);
+      border: 1px solid var(--border-shell);
+      border-radius: 7px;
+      padding: 8px 10px;
+    }
+    .cur-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+    .cur-label { font-size: 11.5px; font-weight: 700; color: var(--text-sub); }
+    .tag-pill {
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: rgba(16, 185, 129, 0.15);
+      color: #10b981;
+    }
+    .cur-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .email-text {
+      font-family: Consolas, monospace;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-main);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .email-masked {
+      color: #10b981;
+      letter-spacing: 0.02em;
+    }
+    .btn-refresh {
+      background: rgba(56, 189, 248, 0.12);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      border-radius: 5px;
+      padding: 3px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* N 仓滚动列表 */
+    .slots-scroll {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 440px;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+    .slots-scroll::-webkit-scrollbar { width: 4px; }
+    .slots-scroll::-webkit-scrollbar-thumb { background: #3f3f4a; border-radius: 4px; }
+
+    .slot-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 3px;
+    }
+    .slot-title { font-size: 12.5px; font-weight: 700; display: flex; align-items: center; gap: 5px; }
+    .slot-meta { display: flex; align-items: center; gap: 6px; }
+    .slot-archived { font-size: 10.5px; color: #10b981; }
+    .email-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-top: 2px;
+    }
+    .btn-delete-slot {
+      flex-shrink: 0;
+      width: 24px;
+      height: 22px;
+      border-radius: 5px;
+      border: 1px solid rgba(239, 68, 68, 0.55);
+      background: rgba(239, 68, 68, 0.14);
+      color: #ef4444;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+    }
+    .btn-delete-slot:hover { background: rgba(239, 68, 68, 0.28); }
+    .vault-window.light .btn-delete-slot {
+      background: #fef2f2;
+      border-color: #fca5a5;
+      color: #dc2626;
+    }
+    .btn-primary-tag {
+      font-size: 10.5px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: var(--btn-bg);
+      border: 1px solid var(--btn-border);
+      color: var(--text-sub);
+    }
+    .btn-primary-tag.is-primary {
+      background: rgba(234, 179, 8, 0.15);
+      border-color: #eab308;
+      color: #facc15;
+      font-weight: 700;
+    }
+    .vault-window.light .btn-primary-tag.is-primary {
+      background: #fef9c3;
+      color: #a16207;
+    }
+
+    .quota-block { margin-top: 5px; }
+    .quota-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 3px;
+    }
+    .quota-track {
+      width: 100%;
+      height: 5px;
+      background: rgba(128, 128, 128, 0.2);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 2px;
+    }
+    .quota-fill { height: 100%; border-radius: 999px; }
+    .quota-sub {
+      font-size: 10px;
+      color: var(--text-dim);
+      margin-left: 0;
+      margin-top: 1px;
+    }
+    .q-green { color: #10b981; }
+    .q-orange { color: #fb923c; }
+    .q-yellow { color: #facc15; }
+    .vault-window.light .q-yellow { color: #ca8a04; }
+
+    .slot-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 7px;
+    }
+    .btn-slot {
+      padding: 4px 0;
+      border-radius: 5px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--btn-bg);
+      border: 1px solid var(--btn-border);
+      color: var(--text-main);
+    }
+    .btn-slot.active-seat {
+      color: #10b981;
+      border-color: #10b981;
+      opacity: 0.85;
+      cursor: default;
+    }
+
+    /* 底部添加新仓位按钮 */
+    .btn-add-slot {
+      width: 100%;
+      padding: 9px 12px;
+      border-radius: 7px;
+      border: 1.5px dashed #10b981;
+      background: rgba(16, 185, 129, 0.1);
+      color: #34d399;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .btn-add-slot:hover { background: rgba(16, 185, 129, 0.2); }
+    .vault-window.light .btn-add-slot { color: #059669; }
+
+    .btn-launch {
+      width: 100%;
+      padding: 9px 12px;
+      border-radius: 7px;
+      border: none;
+      background: #059669;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* 场景二：新增账号向导浮层 */
+    .wizard-backdrop {
+      background: rgba(9, 9, 11, 0.72);
+      border-radius: 8px;
+      padding: 10px;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+    .wizard-box {
+      background: #202027;
+      border: 1px solid #3f3f4a;
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .wizard-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: #38bdf8;
+    }
+    .field-label { font-size: 11px; color: #a1a1aa; margin-bottom: 4px; display: block; }
+    .input-mock {
+      width: 100%;
+      background: #141418;
+      border: 1px solid #3f3f4a;
+      border-radius: 6px;
+      padding: 7px 9px;
+      color: #f4f4f5;
+      font-size: 12px;
+      font-family: inherit;
+    }
+    .method-card {
+      background: #18181d;
+      border: 1px solid #3f3f4a;
+      border-radius: 7px;
+      padding: 9px 10px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .method-card.selected {
+      border-color: #10b981;
+      background: rgba(16, 185, 129, 0.1);
+    }
+    .method-title { font-size: 12px; font-weight: 700; margin-bottom: 3px; display: flex; justify-content: space-between; }
+    .method-desc { font-size: 11px; color: #a1a1aa; line-height: 1.45; }
+    .flow-steps {
+      background: #141418;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 11px;
+      color: #d4d4d8;
+      line-height: 1.6;
+      border-left: 3px solid #38bdf8;
+    }
+
+    /* 底部开源架构说明 */
+    .footer-arch {
+      max-width: 1240px;
+      margin: 26px auto 0;
+      background: rgba(24, 24, 27, 0.78);
+      border: 1px solid #27272e;
+      border-radius: 10px;
+      padding: 16px 20px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 900px) { .footer-arch { grid-template-columns: 1fr 1fr; } }
+    .arch-item h4 { font-size: 13px; color: #34d399; margin-bottom: 4px; }
+    .arch-item p { font-size: 12px; color: #a1a1aa; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <div>
+      <div class="hero-badge">⚡ Antigravity Multi-Vault · 开源多仓扩展方案展示</div>
+      <h1>从「1 个账号」到「无限 N 仓自由切换」</h1>
+      <p>
+        告别固定四仓限制：新用户从仅 1 个主力号起步，按需随时新增第 2、第 3 ……第 N 个账号仓，支持单仓删除、手动一键切号与演示隐私脱敏。
+      </p>
+    </div>
+    <div class="hero-controls">
+      <button id="btnGlobalPrivacy" class="ctrl-pill active" onclick="toggleGlobalPrivacy()">🙈 演示隐私模式：已开启</button>
+      <button class="ctrl-pill" id="btnHeroAdd" onclick="simulateAddSlot()">＋ 演示新增第 3 仓</button>
+    </div>
+  </div>
+
+  <div class="stage">
+    <!-- 场景 1：N 仓动态扩展 + 智能接力 -->
+    <div class="scene-col" id="scene-overview">
+      <div class="scene-caption">
+        <div class="step-tag">Scene 01 · 从 1 仓扩展到 N 仓</div>
+        <h2>支持动态新增与删除账号仓</h2>
+        <p>不再固定 4 槽：从 1 个账号开始按需扩容，每个仓位支持独立重命名或 🗑 移除，查看各仓额度后自主点击切换。</p>
+      </div>
+
+      <div class="vault-window">
+        <div class="title-bar">
+          <div class="title-left">
+            <span>⚡ Antigravity 多仓工作台</span>
+            <span class="title-badge" id="slotCountBadge">2 仓</span>
+          </div>
+          <div class="title-actions">
+            <button class="icon-btn privacy-on" title="隐私屏蔽" onclick="toggleGlobalPrivacy()">🙈</button>
+            <button class="icon-btn" title="切换主题">🌓</button>
+            <button class="icon-btn">—</button>
+            <button class="icon-btn">✕</button>
+          </div>
+        </div>
+        <div class="win-body">
+          <div class="card">
+            <div class="cur-top">
+              <span class="cur-label">● 当前反重力登录账号</span>
+              <span class="tag-pill">主力在席</span>
+            </div>
+            <div class="cur-bottom">
+              <span class="email-text js-email" data-raw="owner.main@gmail.com">••••••@••••.com (已屏蔽)</span>
+              <button class="btn-refresh">🔄 刷新额度</button>
+            </div>
+          </div>
+
+          <div class="slots-scroll" id="dynamicSlotList">
+            <!-- 动态渲染 -->
+          </div>
+
+          <button class="btn-add-slot" onclick="simulateAddSlot()">
+            <span>＋ 新增账号仓（当前 2 仓，点击新增第 3 仓）</span>
+          </button>
+          <button class="btn-launch">🚀 启动 Antigravity 应用</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 场景 2：如何实现新增更多账号（核心解答） -->
+    <div class="scene-col" id="scene-add-flow">
+      <div class="scene-caption">
+        <div class="step-tag">Scene 02 · 如何从 1 仓扩展第 2 / N 个账号</div>
+        <h2>两种新增路径，30 秒完成入仓</h2>
+        <p>手里只有 1 个号也没关系：先存为 slot-1，再通过「空白沙盒登录」或「直接捕获」随时加号与删号。</p>
+      </div>
+
+      <div class="vault-window">
+        <div class="title-bar">
+          <div class="title-left">
+            <span>⚡ 新增账号仓向导</span>
+            <span class="title-badge">N-Slot</span>
+          </div>
+          <div class="title-actions">
+            <button class="icon-btn privacy-on">🙈</button>
+            <button class="icon-btn">✕</button>
+          </div>
+        </div>
+        <div class="win-body">
+          <div class="wizard-backdrop">
+            <div class="wizard-box">
+              <div class="wizard-head">
+                <span>＋ 添加第 2 个账号仓 (slot-2)</span>
+                <span style="font-size:11px;color:#a1a1aa;">1 → N</span>
+              </div>
+
+              <div>
+                <label class="field-label">1. 自定义仓位别名（写入 registry.json）</label>
+                <input class="input-mock" type="text" value="接力备用号 (slot-2)" readonly />
+              </div>
+
+              <div>
+                <label class="field-label">2. 选择账号录入方式</label>
+                <div class="method-card selected" style="margin-bottom:8px;">
+                  <div class="method-title">
+                    <span style="color:#34d399;">🆕 方式 A：空白沙盒登录并自动捕获</span>
+                    <span style="font-size:10px;color:#34d399;">推荐</span>
+                  </div>
+                  <div class="method-desc">
+                    执行 <code>prepare-new</code> 暂存当前号 → 拉起空白登录页 → 登录新号后运行 <code>save slot-2</code> 入仓。
+                  </div>
+                </div>
+                <div class="method-card">
+                  <div class="method-title">
+                    <span>📌 方式 B：直接捕获当前已登录账号</span>
+                  </div>
+                  <div class="method-desc">
+                    若已在客户端手动登出并登录了新号，直接运行 <code>save slot-2</code> 立即归档。
+                  </div>
+                </div>
+              </div>
+
+              <div class="flow-steps">
+                <strong>全生命周期可增可删：</strong><br />
+                ① 新增：<code>prepare-new</code> → 登录 → <code>save slot-N</code><br />
+                ② 删除：<code>remove slot-N --purge</code> 彻底清理快照<br />
+                ③ 兼容：老四仓用户可用 <code>migrate-legacy</code> 一键导入
+              </div>
+
+              <button class="btn-launch" style="background:#0284c7;">🚀 清空运行态并登录新账号</button>
+            </div>
+          </div>
+
+          <div class="card" style="opacity:0.85;">
+            <div class="slot-head">
+              <span class="slot-title" style="color:#3b82f6;">★ slot-1 · 主力仓 (已有 1 仓)</span>
+              <span class="slot-archived">已归档 ✓</span>
+            </div>
+            <div class="email-row">
+              <div class="email-text js-email" data-raw="owner.main@gmail.com">••••••@••••.com (已屏蔽)</div>
+              <button class="btn-delete-slot" title="移除此仓位">🗑</button>
+            </div>
+            <div class="quota-line q-green">⏱️ 5小时 [Gemini] 【充裕】 ▓▓▓▓▓ 100%</div>
+            <div class="quota-line q-green">📅 每周 [Gemini] 【充裕】 ▓▓▓▓▓ 95%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 场景 3：演示隐私模式（浅色模式对比） -->
+    <div class="scene-col" id="scene-privacy">
+      <div class="scene-caption">
+        <div class="step-tag">Scene 03 · 演示隐私模式 & 浅色主题</div>
+        <h2>一键屏蔽邮箱，额度状态清晰保留</h2>
+        <p>对外录屏、截图或给他人演示时，点击顶部 🙈 按钮秒级隐藏全部邮箱，杜绝账号信息泄露。</p>
+      </div>
+
+      <div class="vault-window light">
+        <div class="title-bar">
+          <div class="title-left">
+            <span>⚡ 多仓工作台</span>
+            <span class="title-badge">隐私已开</span>
+          </div>
+          <div class="title-actions">
+            <button class="icon-btn privacy-on" title="隐私模式开启中" onclick="toggleGlobalPrivacy()">🙈</button>
+            <button class="icon-btn">☀️</button>
+            <button class="icon-btn">—</button>
+            <button class="icon-btn">✕</button>
+          </div>
+        </div>
+        <div class="win-body">
+          <div class="card">
+            <div class="cur-top">
+              <span class="cur-label">● 当前反重力登录账号</span>
+              <span class="tag-pill">主力在席</span>
+            </div>
+            <div class="cur-bottom">
+              <span class="email-text js-email" data-raw="owner.main@gmail.com">••••••@••••.com (已屏蔽)</span>
+              <button class="btn-refresh">🔄 刷新额度</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="slot-head">
+              <span class="slot-title" style="color:#2563eb;">★ 主力仓 (slot-1)</span>
+              <div class="slot-meta">
+                <span class="slot-archived">已归档 ✓</span>
+                <span class="btn-primary-tag is-primary">★ 当前主力</span>
+              </div>
+            </div>
+            <div class="email-row">
+              <div class="email-text js-email" data-raw="owner.main@gmail.com">••••••@••••.com (已屏蔽)</div>
+              <button class="btn-delete-slot" title="移除此仓位">🗑</button>
+            </div>
+            <div class="quota-line q-green">⏱️ 5小时 [Gemini] 【充裕】 ▓▓▓▓▓ 100%</div>
+            <div class="quota-sub">↳ 恢复: 额度监控正常 [刚刚更新]</div>
+            <div class="quota-line q-green">📅 每周 [Gemini] 【充裕】 ▓▓▓▓▓ 95%</div>
+            <div class="slot-actions">
+              <button class="btn-slot">📌 存入 slot-1</button>
+              <button class="btn-slot active-seat">✓ 在席中</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="slot-head">
+              <span class="slot-title" style="color:#059669;">👤 接力仓 (slot-2)</span>
+              <div class="slot-meta">
+                <span class="slot-archived">已归档 ✓</span>
+                <span class="btn-primary-tag">设为主力</span>
+              </div>
+            </div>
+            <div class="email-row">
+              <div class="email-text js-email" data-raw="relay.two@gmail.com">••••••@••••.com (已屏蔽)</div>
+              <button class="btn-delete-slot" title="移除此仓位">🗑</button>
+            </div>
+            <div class="quota-line q-orange">⏱️ 5小时 [Gemini] 【紧张】 ▓░░░░ 5%</div>
+            <div class="quota-sub">↳ 恢复: 4 分后恢复 [刚刚更新]</div>
+            <div class="quota-line q-green">📅 每周 [Gemini] 【良好】 ▓▓▓░░ 51%</div>
+            <div class="slot-actions">
+              <button class="btn-slot">📌 存入 slot-2</button>
+              <button class="btn-slot" style="color:#059669;border-color:#059669;">⚡ 切到 slot-2</button>
+            </div>
+          </div>
+
+          <div class="card" style="padding:8px 10px;">
+            <div style="font-size:11px;font-weight:700;margin-bottom:4px;">📊 Gemini 额度阶梯判定区间</div>
+            <div style="font-size:10.5px;display:flex;flex-wrap:wrap;gap:6px 10px;">
+              <span class="q-green">🟢 充裕 &gt;70%</span>
+              <span style="color:#10b981;">🟢 良好 41~70%</span>
+              <span class="q-yellow">🟡 注意 21~40%</span>
+              <span class="q-orange">🟠 紧张 1~20%</span>
+            </div>
+          </div>
+
+          <button class="btn-add-slot">＋ 新增账号仓（无限扩展）</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-arch">
+    <div class="arch-item">
+      <h4>1. 动态注册表 (N-Slot)</h4>
+      <p>废弃硬编码 A/B/C/D，改用 <code>registry.json</code> 存储任意数量仓位、别名与角色，支持旧版四仓一键无损迁移。</p>
+    </div>
+    <div class="arch-item">
+      <h4>2. 空白沙盒无痛加号</h4>
+      <p>新增账号时自动暂存当前会话到 <code>restore_backups/</code>，登录新号捕获完成后即可秒切回主力仓。</p>
+    </div>
+    <div class="arch-item">
+      <h4>3. 清晰额度自主切换</h4>
+      <p>实时展示每个仓位 5h / 每周剩余百分比与恢复倒计时，由用户自主点击切换，无多余弹窗打扰。</p>
+    </div>
+    <div class="arch-item">
+      <h4>4. 开源零入侵 & 隐私安全</h4>
+      <p>纯 Python 标准库跨平台实现（Win/Mac/Linux），支持 <code>--mask</code> 与 UI 一键屏蔽邮箱，零云端上传。</p>
+    </div>
+  </div>
+
+  <script>
+    let privacyOn = true;
+    const initialSlots = [
+      { id: "slot-1", name: "★ 主力仓 (slot-1)", color: "#3b82f6", primary: true, email: "owner.main@gmail.com", q5: 8, q5Tier: "【紧张】", q5Bar: "▓░░░░", q5Cls: "q-orange", q5Sub: "12 分后恢复", qw: 51, qwBar: "▓▓▓░░", active: true },
+      { id: "slot-2", name: "👤 接力仓 (slot-2)", color: "#10b981", primary: false, email: "user.relay@gmail.com", q5: 100, q5Tier: "【充裕】", q5Bar: "▓▓▓▓▓", q5Cls: "q-green", q5Sub: "额度监控正常", qw: 96, qwBar: "▓▓▓▓▓", active: false }
+    ];
+
+    function maskText(raw) {
+      return privacyOn ? "••••••@••••.com (已屏蔽)" : raw;
+    }
+
+    function removeSlot(idx) {
+      if (initialSlots.length <= 1) return;
+      initialSlots.splice(idx, 1);
+      renderLeftSlots();
+    }
+
+    function renderLeftSlots() {
+      const container = document.getElementById("dynamicSlotList");
+      container.innerHTML = initialSlots.map((s, idx) => `
+        <div class="card">
+          <div class="slot-head">
+            <span class="slot-title" style="color:${s.color};">${s.name}</span>
+            <div class="slot-meta">
+              <span class="slot-archived">已归档 ✓</span>
+              <span class="btn-primary-tag ${s.primary ? 'is-primary' : ''}">${s.primary ? '★ 主力' : '设为主力'}</span>
+            </div>
+          </div>
+          <div class="email-row">
+            <div class="email-text ${privacyOn ? 'email-masked' : ''}">${maskText(s.email)}</div>
+            ${initialSlots.length > 1 ? `<button class="btn-delete-slot" title="移除此仓位" onclick="removeSlot(${idx})">🗑</button>` : ''}
+          </div>
+          <div class="quota-block">
+            <div class="quota-head" style="color:${s.q5Cls === 'q-orange' ? '#fb923c' : '#10b981'};">
+              <span>⏱️ 5小时 [Gemini]</span>
+              <span>${s.q5Tier} ${s.q5}%</span>
+            </div>
+            <div class="quota-track"><div class="quota-fill" style="width:${s.q5}%;background:${s.q5Cls === 'q-orange' ? '#fb923c' : '#10b981'};"></div></div>
+            <div class="quota-sub">↳ 恢复: ${s.q5Sub}</div>
+          </div>
+          <div class="quota-block">
+            <div class="quota-head" style="color:#10b981;">
+              <span>📅 每周 [Gemini]</span>
+              <span>【充裕】 ${s.qw}%</span>
+            </div>
+            <div class="quota-track"><div class="quota-fill" style="width:${s.qw}%;background:#10b981;"></div></div>
+          </div>
+          <div class="slot-actions">
+            <button class="btn-slot">📌 存入 ${s.id}</button>
+            ${s.active
+              ? `<button class="btn-slot active-seat">✓ 在席中</button>`
+              : `<button class="btn-slot" style="color:${s.color};border-color:${s.color};">⚡ 切到 ${s.id}</button>`}
+          </div>
+        </div>
+      `).join("");
+
+      const count = initialSlots.length;
+      document.getElementById("slotCountBadge").textContent = count + " 仓";
+      const addBtn = document.querySelector("#scene-overview .btn-add-slot span");
+      if (addBtn) addBtn.textContent = `＋ 新增账号仓（当前 ${count} 仓，点击新增第 ${count + 1} 仓）`;
+      const heroAdd = document.getElementById("btnHeroAdd");
+      if (heroAdd) heroAdd.textContent = `＋ 演示新增第 ${count + 1} 仓`;
+
+      document.querySelectorAll(".js-email").forEach(el => {
+        el.textContent = maskText(el.getAttribute("data-raw"));
+        el.classList.toggle("email-masked", privacyOn);
+      });
+    }
+
+    function toggleGlobalPrivacy() {
+      privacyOn = !privacyOn;
+      const btn = document.getElementById("btnGlobalPrivacy");
+      btn.textContent = privacyOn ? "🙈 演示隐私模式：已开启" : "👁 演示隐私模式：已关闭";
+      btn.classList.toggle("active", privacyOn);
+      document.querySelectorAll(".icon-btn[title*='隐私']").forEach(b => {
+        b.textContent = privacyOn ? "🙈" : "👁";
+        b.classList.toggle("privacy-on", privacyOn);
+      });
+      renderLeftSlots();
+    }
+
+    function simulateAddSlot() {
+      const nextNum = initialSlots.length + 1;
+      initialSlots.push({
+        id: `slot-${nextNum}`,
+        name: `👤 新增扩展仓 (slot-${nextNum})`,
+        color: "#34d399",
+        primary: false,
+        email: `extra.account${nextNum}@gmail.com`,
+        q5: 100,
+        q5Tier: "【充裕】",
+        q5Bar: "▓▓▓▓▓",
+        q5Cls: "q-green",
+        q5Sub: "新录入就绪",
+        qw: 100,
+        qwBar: "▓▓▓▓▓",
+        active: false
+      });
+      renderLeftSlots();
+      const scroller = document.getElementById("dynamicSlotList");
+      scroller.scrollTop = scroller.scrollHeight;
+    }
+
+    renderLeftSlots();
+  </script>
+</body>
+</html>

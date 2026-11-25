@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+Thumbs.db
+profiles/
+*.dat
+*.email
+quota_*.json
+registry.json
+privacy.json
